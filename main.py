@@ -4,6 +4,8 @@ import datetime
 import json
 import random
 import time
+import os
+
 from pathlib import Path
 
 import numpy as np
@@ -103,6 +105,9 @@ def get_args_parser():
 
 
 def main(args):
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    
     utils.init_distributed_mode(args)
     print("git:\n  {}\n".format(utils.get_sha()))
 
