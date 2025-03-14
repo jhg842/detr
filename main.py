@@ -129,16 +129,9 @@ def main(args):
     model.to(device)
 
     pre_model = torch.load("/data/detr/results/detr-r50.pth", map_location='cpu')
-    model.load_state_dict(pre_model['model'])
+
     
-    if args.freeze_transformer_weights:
-        for param in model.transformer.parameters():
-            param.requires_grad = False
-    
-    if args.freeze_backbone_weights:    
-        for param in model.backbone.parameters():
-            param.requires_grad = False
-    
+
     
 
     model_without_ddp = model
@@ -148,6 +141,16 @@ def main(args):
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
 
+
+    if args.freeze_transformer_weights:
+        for param in model.transformer.parameters():
+            param.requires_grad = False
+    
+    if args.freeze_backbone_weights:    
+        for param in model.backbone.parameters():
+            param.requires_grad = False
+
+    model_without_ddp.load_state_dict(pre_model['model'], strict=False)
 
     param_dicts = [
         {"params": [p for p in model.parameters() if p.requires_grad]},
