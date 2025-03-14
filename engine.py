@@ -6,7 +6,7 @@ import math
 import os
 import sys
 from typing import Iterable
-
+import json
 import torch
 
 import util.misc as utils
@@ -84,7 +84,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             data_loader.dataset.ann_folder,
             output_dir=os.path.join(output_dir, "panoptic_eval"),
         )
-
+    all_predictions = []
     for samples, targets in metric_logger.log_every(data_loader, 10, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -106,6 +106,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors['bbox'](outputs, orig_target_sizes)
+        all_predictions.extend(results)
         if 'segm' in postprocessors.keys():
             target_sizes = torch.stack([t["size"] for t in targets], dim=0)
             results = postprocessors['segm'](results, outputs, orig_target_sizes, target_sizes)
@@ -149,3 +150,36 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         stats['PQ_th'] = panoptic_res["Things"]
         stats['PQ_st'] = panoptic_res["Stuff"]
     return stats, coco_evaluator
+
+
+def save_predictions(results, targets, output_dir, file_name="predictions.json"):
+    """
+    예측된 바운딩 박스 정보를 JSON 파일로 저장하는 함수
+    :param results: 모델이 예측한 바운딩 박스 결과
+    :param targets: 이미지 ID 정보 포함 (정답 데이터)
+    :param output_dir: 저장할 폴더 경로
+    :param file_name: 저장할 파일 이름
+    """
+    os.makedirs(output_dir, exist_ok=True)  # 디렉터리 생성 (없으면 자동 생성)
+    file_path = os.path.join(output_dir, file_name)
+
+    all_predictions = []
+
+    for target, result in zip(targets, results):
+        image_id = target["image_id"].item()
+        detections = []
+        
+        for score, label, box in zip(result["scores"], result["labels"], result["boxes"]):
+            detections.append({
+                "image_id": image_id,
+                "category_id": label.item(),
+                "score": round(score.item(), 3),
+                "bbox": [round(coord, 2) for coord in box.tolist()]  # 바운딩 박스 좌표
+            })
+
+        all_predictions.append(detections)
+
+    with open(file_path, "w") as f:
+        json.dump(all_predictions, f, indent=4)
+
+    print(f"Saved predictions to {file_path}")
