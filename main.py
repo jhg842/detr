@@ -33,7 +33,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--frozen_weights', type=str, default=None,
                         help="Path to the pretrained model. If set, only the mask head will be trained")
-    parser.add_argument('--freeze_tranformer_weights', action='store_true',
+    parser.add_argument('--freeze_transformer_weights', action='store_true',
                         help="Path to the pretrained model. If set, only the mask head will be trained")
     parser.add_argument('--freeze_backbone_weights', action='store_true',
                         help="Path to the pretrained model. If set, only the mask head will be trained")
