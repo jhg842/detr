@@ -143,11 +143,11 @@ def main(args):
 
 
     if args.freeze_transformer_weights:
-        for param in model.transformer.parameters():
+        for param in  model_without_ddp.transformer.parameters():
             param.requires_grad = False
     
     if args.freeze_backbone_weights:    
-        for param in model.backbone.parameters():
+        for param in  model_without_ddp.backbone.parameters():
             param.requires_grad = False
 
     model_without_ddp.load_state_dict(pre_model['model'], strict=False)
