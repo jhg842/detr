@@ -143,12 +143,16 @@ def main(args):
 
 
     if args.freeze_transformer_weights:
-        for param in  model_without_ddp.transformer.parameters():
-            param.requires_grad = False
+        for name,param in  model_without_ddp.transformer.parameters():
+            if "decoder" in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
     
     if args.freeze_backbone_weights:    
-        for param in  model_without_ddp.backbone.parameters():
-            param.requires_grad = False
+        for name, param in  model_without_ddp.backbone.parameters():
+            if 'layer4' not in name:
+                param.requires_grad = False
 
     model_without_ddp.load_state_dict(pre_model['model'], strict=False)
 
