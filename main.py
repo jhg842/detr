@@ -128,7 +128,7 @@ def main(args):
     model, criterion, postprocessors = build_model(args)
     model.to(device)
 
-    pre_model = torch.load("/data/detr/results/detr-r50.pth", map_location='cpu')
+    # pre_model = torch.load("/data/detr/results/detr-r50.pth", map_location='cpu')
 
     
 
@@ -156,19 +156,19 @@ def main(args):
             else:
                 param.requires_grad = True
 
-    model_without_ddp.load_state_dict(pre_model['model'], strict=False)
-
-    param_dicts = [
-        {"params": [p for p in model.parameters() if p.requires_grad]},
-    ]
+    # model_without_ddp.load_state_dict(pre_model['model'], strict=False)
 
     # param_dicts = [
-    #     {"params": [p for n, p in model_without_ddp.named_parameters() if "backbone" not in n and p.requires_grad]},
-    #     {
-    #         "params": [p for n, p in model_without_ddp.named_parameters() if "backbone" in n and p.requires_grad],
-    #         "lr": args.lr_backbone,
-    #     },
+    #     {"params": [p for p in model.parameters() if p.requires_grad]},
     # ]
+
+    param_dicts = [
+        {"params": [p for n, p in model_without_ddp.named_parameters() if "backbone" not in n and p.requires_grad]},
+        {
+            "params": [p for n, p in model_without_ddp.named_parameters() if "backbone" in n and p.requires_grad],
+            "lr": args.lr_backbone,
+        },
+    ]
     optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
                                   weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
